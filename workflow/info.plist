@@ -58,6 +58,42 @@
 				<key>vitoclose</key>
 				<false/>
 			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>E83B3AC5-00E2-5CDF-ADE3-40B6CBEBA0C2</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>sourceoutputuid</key>
+				<string>833A9C52-952F-5F88-819B-443127CFB774</string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>B7383943-4212-59E4-BE4F-4C26033EC4C3</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>sourceoutputuid</key>
+				<string>DB51C916-2123-5380-A6BD-9A1FF3DF1C6C</string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>982C72A4-668F-516D-A8B9-7B2D291F73BE</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>sourceoutputuid</key>
+				<string>79C719FC-84A1-5354-B596-94AD249FFF75</string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
 		</array>
 		<key>31B729EA-3B05-5E21-BCC0-62B05B9CFCD9</key>
 		<array>
@@ -137,6 +173,19 @@
 				<false/>
 			</dict>
 		</array>
+		<key>982C72A4-668F-516D-A8B9-7B2D291F73BE</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2C89E3E3-B82E-50C4-BB80-C90C81FF4B30</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
 		<key>A8297114-E3CA-515E-99F5-5E3A8465BE3A</key>
 		<array>
 			<dict>
@@ -155,6 +204,29 @@
 			<dict>
 				<key>destinationuid</key>
 				<string>C9CE0343-42F8-5C0D-AE94-F977AB760047</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>B7383943-4212-59E4-BE4F-4C26033EC4C3</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>0A48D75F-C48C-5037-AE87-F3597430D718</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>2C89E3E3-B82E-50C4-BB80-C90C81FF4B30</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -194,6 +266,19 @@
 			<dict>
 				<key>destinationuid</key>
 				<string>0B36D339-6720-5E19-8349-1C365EC9E7DD</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>E83B3AC5-00E2-5CDF-ADE3-40B6CBEBA0C2</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2C89E3E3-B82E-50C4-BB80-C90C81FF4B30</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -706,6 +791,48 @@
 						<key>uid</key>
 						<string>AFE0BE40-BCE2-5ECB-9356-F676698DADF5</string>
 					</dict>
+					<dict>
+						<key>inputstring</key>
+						<string>{var:out}</string>
+						<key>matchcasesensitive</key>
+						<false/>
+						<key>matchmode</key>
+						<integer>0</integer>
+						<key>matchstring</key>
+						<string>secret</string>
+						<key>outputlabel</key>
+						<string>Copy Secret</string>
+						<key>uid</key>
+						<string>833A9C52-952F-5F88-819B-443127CFB774</string>
+					</dict>
+					<dict>
+						<key>inputstring</key>
+						<string>{var:out}</string>
+						<key>matchcasesensitive</key>
+						<false/>
+						<key>matchmode</key>
+						<integer>0</integer>
+						<key>matchstring</key>
+						<string>secret_notify</string>
+						<key>outputlabel</key>
+						<string>Copy Secret + Notify</string>
+						<key>uid</key>
+						<string>DB51C916-2123-5380-A6BD-9A1FF3DF1C6C</string>
+					</dict>
+					<dict>
+						<key>inputstring</key>
+						<string>{var:out}</string>
+						<key>matchcasesensitive</key>
+						<false/>
+						<key>matchmode</key>
+						<integer>0</integer>
+						<key>matchstring</key>
+						<string>secret_paste</string>
+						<key>outputlabel</key>
+						<string>Paste Secret</string>
+						<key>uid</key>
+						<string>79C719FC-84A1-5354-B596-94AD249FFF75</string>
+					</dict>
 				</array>
 				<key>elselabel</key>
 				<string>Nothing</string>
@@ -779,6 +906,89 @@
 		<dict>
 			<key>config</key>
 			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<true/>
+				<key>transient</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>E83B3AC5-00E2-5CDF-ADE3-40B6CBEBA0C2</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<true/>
+				<key>transient</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>B7383943-4212-59E4-BE4F-4C26033EC4C3</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<true/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<true/>
+				<key>transient</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>982C72A4-668F-516D-A8B9-7B2D291F73BE</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<true/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>[[ "${clear_seconds:-0}" -gt 0 ]] || exit 0
+sleep "${clear_seconds}"
+# Only clear if the copied secret is still on the clipboard
+[[ "$(/usr/bin/pbpaste)" == "${1}" ]] &amp;&amp; /usr/bin/printf '' | /usr/bin/pbcopy</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>11</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>2C89E3E3-B82E-50C4-BB80-C90C81FF4B30</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
 				<key>lastpathcomponent</key>
 				<false/>
 				<key>onlyshowifquerypopulated</key>
@@ -807,7 +1017,9 @@ Search your [ProxiedMail](https://proxiedmail.com) aliases via the `pmail` keywo
 * &lt;kbd&gt;⌘&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Paste alias into the frontmost app.
 * &lt;kbd&gt;⌥&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Open alias inbox.
 * &lt;kbd&gt;⌃&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Pause or resume forwarding.
-* &lt;kbd&gt;⇧&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Show more actions: edit description, change forwarding address, set webhook, watch for codes, delete alias. Type after the address to enter a new description, forwarding address, or webhook URL.
+* &lt;kbd&gt;⇧&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Show more actions: edit description, add, replace or remove forwarding addresses, set webhook, watch for codes, delete alias. Type after the address to enter a new description, forwarding address, or webhook URL.
+
+Narrow the search with filters such as `:paused`, `:burner`, `:unverified`, `:mail`, `:inbox`, and `:webhook`. Type `:` to see them all. Forwarding addresses that still need to be verified are marked ⚠️, since ProxiedMail doesn't deliver to them yet.
 
 Create aliases via the `pmnew` keyword, optionally followed by a description. Start with `name@` for a custom address, e.g. `pmnew shop@ Amazon orders`.
 
@@ -824,9 +1036,9 @@ Read received emails via the `pminbox` keyword. Pick an alias, then an email to 
 * &lt;kbd&gt;⌃&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Copy email text.
 * &lt;kbd&gt;⌘&lt;/kbd&gt;&lt;kbd&gt;Y&lt;/kbd&gt; Quick Look email.
 
-Emails can only be read for aliases with inbox browsing on, and only emails received after it was turned on are listed. Remote images are blocked unless allowed in the Workflow’s Configuration.
+Emails can only be read for aliases with inbox browsing on, and only emails received after it was turned on are listed. Turn it on for all aliases at once from the bottom of the list. Remote images are blocked unless allowed in the Workflow’s Configuration.
 
-Watch for verification codes via the `pmcode` keyword. New emails to aliases with inbox browsing are checked every few seconds for three minutes, showing codes and verification links from the last 15 minutes.
+Watch for verification codes via the `pmcode` keyword. New emails to aliases with inbox browsing are checked every few seconds, showing codes and verification links from recent emails. Copied codes are kept out of Alfred's clipboard history and can be cleared automatically, as set in the Workflow’s Configuration.
 
 * &lt;kbd&gt;↩&lt;/kbd&gt; Copy code or open verification link.
 * &lt;kbd&gt;⌘&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Paste code into the frontmost app.
@@ -867,6 +1079,15 @@ This workflow was built with the help of an AI assistant (Claude).
 			<integer>300</integer>
 			<key>ypos</key>
 			<integer>500</integer>
+		</dict>
+		<key>2C89E3E3-B82E-50C4-BB80-C90C81FF4B30</key>
+		<dict>
+			<key>note</key>
+			<string>Clears copied codes after the configured delay</string>
+			<key>xpos</key>
+			<integer>900</integer>
+			<key>ypos</key>
+			<integer>630</integer>
 		</dict>
 		<key>31B729EA-3B05-5E21-BCC0-62B05B9CFCD9</key>
 		<dict>
@@ -919,6 +1140,13 @@ This workflow was built with the help of an AI assistant (Claude).
 			<key>ypos</key>
 			<integer>630</integer>
 		</dict>
+		<key>982C72A4-668F-516D-A8B9-7B2D291F73BE</key>
+		<dict>
+			<key>xpos</key>
+			<integer>700</integer>
+			<key>ypos</key>
+			<integer>780</integer>
+		</dict>
 		<key>A8297114-E3CA-515E-99F5-5E3A8465BE3A</key>
 		<dict>
 			<key>xpos</key>
@@ -932,6 +1160,13 @@ This workflow was built with the help of an AI assistant (Claude).
 			<integer>30</integer>
 			<key>ypos</key>
 			<integer>180</integer>
+		</dict>
+		<key>B7383943-4212-59E4-BE4F-4C26033EC4C3</key>
+		<dict>
+			<key>xpos</key>
+			<integer>700</integer>
+			<key>ypos</key>
+			<integer>630</integer>
 		</dict>
 		<key>C190D144-20EE-5941-8191-BD87357CA5C9</key>
 		<dict>
@@ -960,6 +1195,13 @@ This workflow was built with the help of an AI assistant (Claude).
 			<integer>30</integer>
 			<key>ypos</key>
 			<integer>500</integer>
+		</dict>
+		<key>E83B3AC5-00E2-5CDF-ADE3-40B6CBEBA0C2</key>
+		<dict>
+			<key>xpos</key>
+			<integer>700</integer>
+			<key>ypos</key>
+			<integer>480</integer>
 		</dict>
 		<key>F9207154-2029-5BD1-B3BC-D34CEBA03831</key>
 		<dict>
@@ -1002,6 +1244,32 @@ This workflow was built with the help of an AI assistant (Claude).
 				<key>pairs</key>
 				<array>
 					<array>
+						<string>↩ copies the alias</string>
+						<string>copy</string>
+					</array>
+					<array>
+						<string>↩ pastes the alias</string>
+						<string>paste</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string>What ↩ does in the alias search. ⌘↩ does the opposite.</string>
+			<key>label</key>
+			<string>Alias Search</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>pmail_enter</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>copy</string>
+				<key>pairs</key>
+				<array>
+					<array>
 						<string>Copy alias to clipboard</string>
 						<string>copy</string>
 					</array>
@@ -1019,6 +1287,55 @@ This workflow was built with the help of an AI assistant (Claude).
 			<string>popupbutton</string>
 			<key>variable</key>
 			<string>after_create</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>newest</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>Newest first (learns from use)</string>
+						<string>newest</string>
+					</array>
+					<array>
+						<string>Alphabetically</string>
+						<string>az</string>
+					</array>
+					<array>
+						<string>Most emails received</string>
+						<string>received</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string></string>
+			<key>label</key>
+			<string>Sort Aliases</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>sort_order</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<false/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>Hide ProxiedMail's automatic news alias</string>
+			</dict>
+			<key>description</key>
+			<string>Search with :all to include it.</string>
+			<key>label</key>
+			<string>Automatic Aliases</string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>hide_automatic</string>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -1057,6 +1374,207 @@ This workflow was built with the help of an AI assistant (Claude).
 			<string>checkbox</string>
 			<key>variable</key>
 			<string>remote_images</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<true/>
+				<key>required</key>
+				<false/>
+				<key>text</key>
+				<string>Show a notification after actions</string>
+			</dict>
+			<key>description</key>
+			<string>Failures are always shown.</string>
+			<key>label</key>
+			<string>Notifications</string>
+			<key>type</key>
+			<string>checkbox</string>
+			<key>variable</key>
+			<string>notifications</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>defaultvalue</key>
+				<integer>0</integer>
+				<key>markercount</key>
+				<integer>5</integer>
+				<key>maxvalue</key>
+				<integer>120</integer>
+				<key>minvalue</key>
+				<integer>0</integer>
+				<key>onlystoponmarkers</key>
+				<true/>
+				<key>showmarkers</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Seconds before a copied code or email text is cleared from the clipboard. 0 keeps it. Codes are never saved to Alfred's clipboard history.</string>
+			<key>label</key>
+			<string>Clear Codes</string>
+			<key>type</key>
+			<string>slider</string>
+			<key>variable</key>
+			<string>clear_seconds</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>3</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>1 minute</string>
+						<string>1</string>
+					</array>
+					<array>
+						<string>3 minutes</string>
+						<string>3</string>
+					</array>
+					<array>
+						<string>5 minutes</string>
+						<string>5</string>
+					</array>
+					<array>
+						<string>10 minutes</string>
+						<string>10</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string>How long the codes view keeps checking for new emails.</string>
+			<key>label</key>
+			<string>Watch For Codes</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>watch_minutes</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>15</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>Last 5 minutes</string>
+						<string>5</string>
+					</array>
+					<array>
+						<string>Last 15 minutes</string>
+						<string>15</string>
+					</array>
+					<array>
+						<string>Last 30 minutes</string>
+						<string>30</string>
+					</array>
+					<array>
+						<string>Last hour</string>
+						<string>60</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string>How old an email can be to show up in the codes view.</string>
+			<key>label</key>
+			<string>Recent Emails</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>code_window_minutes</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>300</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>Every minute</string>
+						<string>60</string>
+					</array>
+					<array>
+						<string>Every 5 minutes</string>
+						<string>300</string>
+					</array>
+					<array>
+						<string>Every 15 minutes</string>
+						<string>900</string>
+					</array>
+					<array>
+						<string>Every hour</string>
+						<string>3600</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string>How often the alias list is fetched again. Changes made in Alfred always refresh it.</string>
+			<key>label</key>
+			<string>Refresh Aliases</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>cache_ttl</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>15</string>
+				<key>pairs</key>
+				<array>
+					<array>
+						<string>5 seconds</string>
+						<string>5</string>
+					</array>
+					<array>
+						<string>10 seconds</string>
+						<string>10</string>
+					</array>
+					<array>
+						<string>15 seconds</string>
+						<string>15</string>
+					</array>
+					<array>
+						<string>30 seconds</string>
+						<string>30</string>
+					</array>
+				</array>
+			</dict>
+			<key>description</key>
+			<string></string>
+			<key>label</key>
+			<string>Network Timeout</string>
+			<key>type</key>
+			<string>popupbutton</string>
+			<key>variable</key>
+			<string>timeout_seconds</string>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>default</key>
+				<string>https://proxiedmail.com</string>
+				<key>placeholder</key>
+				<string></string>
+				<key>required</key>
+				<false/>
+				<key>trim</key>
+				<true/>
+			</dict>
+			<key>description</key>
+			<string>Only change this if ProxiedMail tells you to.</string>
+			<key>label</key>
+			<string>API Address</string>
+			<key>type</key>
+			<string>textfield</string>
+			<key>variable</key>
+			<string>api_host</string>
 		</dict>
 		<dict>
 			<key>config</key>
@@ -1146,7 +1664,7 @@ This workflow was built with the help of an AI assistant (Claude).
 	<key>variablesdontexport</key>
 	<array/>
 	<key>version</key>
-	<string>0.2.0</string>
+	<string>0.3.0</string>
 	<key>webaddress</key>
 	<string>https://github.com/x-o-r-r-o/alfred-proxiedmail</string>
 </dict>

@@ -35,6 +35,12 @@ const config = {
   kwCreate: envVar("kw_create", "pmnew"),
   kwInbox: envVar("kw_inbox", "pminbox"),
   kwCode: envVar("kw_code", "pmcode"),
+  pmailEnter: envVar("pmail_enter", "copy"),
+  notifications: envFlag("notifications", true),
+  hideAutomatic: envFlag("hide_automatic", false),
+  sortOrder: envVar("sort_order", "newest"),
+  watchSeconds: Math.max(1, Number(envVar("watch_minutes", "3")) || 3) * 60,
+  windowMinutes: Math.max(1, Number(envVar("code_window_minutes", "15")) || 15),
   cacheDir: envVar("alfred_workflow_cache", $.NSTemporaryDirectory().js + "proxiedmail-alfred"),
   dataDir: envVar("alfred_workflow_data", $.NSTemporaryDirectory().js + "proxiedmail-alfred-data"),
   bundleId: envVar("alfred_workflow_bundleid", "com.proxiedmail.alfred"),
@@ -220,6 +226,33 @@ function isInternal(address) {
   return INTERNAL_DOMAINS.some(d => address.toLowerCase().endsWith("@" + d))
 }
 
+// ProxiedMail's own tips address (news-…@proxiedmail.com)
+function isAutomatic(alias) {
+  const a = alias.attributes
+  return /^Automatic address/i.test(a.description || "") || /^news-[0-9a-f]+@proxiedmail\.com$/i.test(a.proxy_address)
+}
+
+// Forwarding addresses ProxiedMail won't deliver to until their verification link is clicked
+const unverifiedAddresses = alias => realAddresses(alias).filter(r => !r.internal && !r.verified)
+
+const FILTERS = {
+  paused: { test: a => !isBurner(a) && realAddresses(a).length > 0 && !forwardingEnabled(a), help: "Aliases with forwarding paused" },
+  burner: { test: a => isBurner(a), help: "Burner aliases with no forwarding" },
+  unverified: { test: a => unverifiedAddresses(a).length > 0, help: "Aliases forwarding to an unverified address" },
+  mail: { test: a => (a.attributes.received_emails || 0) > 0, help: "Aliases that have received email" },
+  inbox: { test: a => a.attributes.is_browsable === true, help: "Aliases with inbox browsing on" },
+  webhook: { test: a => Boolean(a.attributes.callback_url), help: "Aliases with a webhook" },
+  auto: { test: a => isAutomatic(a), help: "ProxiedMail's automatic aliases" },
+  all: { test: () => true, help: "Include automatic aliases even when hidden" },
+}
+
+// Split ":filter" tokens out of a search query
+function parseFilters(query) {
+  const tokens = query.split(/\s+/).filter(Boolean)
+  const filters = tokens.filter(t => t.startsWith(":")).map(t => t.slice(1).toLowerCase())
+  return { text: tokens.filter(t => !t.startsWith(":")).join(" "), filters }
+}
+
 function forwardingEnabled(alias) { return realAddresses(alias).some(r => r.enabled) }
 
 function isBurner(alias) {
@@ -244,14 +277,19 @@ const chosenDomain = () => loadPrefs().domain || ""
 // Forwarding addresses already used by aliases, most used first, plus the account email
 function knownForwards(aliases) {
   const counts = {}
+  const verified = {}
   for (const alias of aliases || []) {
-    for (const r of realAddresses(alias)) if (!r.internal) counts[r.address] = (counts[r.address] || 0) + 1
+    for (const r of realAddresses(alias)) {
+      if (r.internal) continue
+      counts[r.address] = (counts[r.address] || 0) + 1
+      verified[r.address] = verified[r.address] || r.verified
+    }
   }
   const account = accountEmail()
-  if (account && !(account in counts)) counts[account] = 0
+  if (account && !(account in counts)) { counts[account] = 0; verified[account] = true }
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
-    .map(([address, count]) => ({ address, count, account: address === account }))
+    .map(([address, count]) => ({ address, count, account: address === account, verified: verified[address] }))
 }
 
 function defaultForward(aliases) {
@@ -508,21 +546,25 @@ function errorItems(error, retryQuery, keyword = config.kwAliases) {
   }
   return [{
     title: error.status === 0 ? "Can't reach ProxiedMail" : `ProxiedMail error (${error.status})`,
-    subtitle: `${error.message} · ⏎ Retry`,
+    subtitle: `${error.message} · ⏎ Retry · ⌘⏎ ProxiedMail status`,
     arg: op("nav", { query: retryQuery, keyword }),
     icon: icon("warn"),
+    mods: { cmd: { arg: op("open", { url: "https://status.proxiedmail.com" }), subtitle: "Open status.proxiedmail.com" } },
   }]
 }
 
 // ─── Script Filter: aliases ─────────────────────────────────────────────────
 
 function aliasItem(alias) {
+  const pasteFirst = config.pmailEnter === "paste"
   const a = alias.attributes
   const address = a.proxy_address
   const reals = realAddresses(alias)
   const enabled = forwardingEnabled(alias)
   const burner = isBurner(alias)
-  const target = burner ? "no forwarding (burner)" : reals.map(r => r.address).join(", ") || "no forwarding"
+  const target = burner
+    ? "no forwarding (burner)"
+    : reals.map(r => r.address + (!r.internal && !r.verified ? " ⚠️ unverified" : "")).join(", ") || "no forwarding"
   const parts = [
     `${enabled || burner ? "→" : "⏸"} ${target}${!enabled && !burner ? " (paused)" : ""}`,
     `${a.received_emails || 0} received`,
@@ -533,13 +575,15 @@ function aliasItem(alias) {
     uid: alias.id,
     title: address,
     subtitle: parts.join(" · "),
-    arg: op("copy", { text: address }),
+    arg: op(pasteFirst ? "paste" : "copy", { text: address }),
     autocomplete: `${SEP}${address} `,
-    icon: icon(burner ? "burner" : enabled ? "alias" : "aliasOff"),
+    icon: icon(burner ? "burner" : unverifiedAddresses(alias).length ? "warn" : enabled ? "alias" : "aliasOff"),
     text: { copy: address, largetype: address },
     action: address,
     mods: {
-      cmd: { arg: op("paste", { text: address }), subtitle: "Paste alias into the frontmost app" },
+      cmd: pasteFirst
+        ? { arg: op("copy", { text: address }), subtitle: "Copy alias" }
+        : { arg: op("paste", { text: address }), subtitle: "Paste alias into the frontmost app" },
       alt: { arg: op("nav", { query: `${SEP}${address} `, keyword: config.kwInbox }), subtitle: `Open inbox (${a.received_emails || 0} received)` },
       ctrl: burner || !reals.length
         ? { valid: false, subtitle: burner ? "Burner aliases have no forwarding to pause" : "This alias has no forwarding address" }
@@ -560,32 +604,58 @@ function modeAliases(query) {
     items.push({ title: "Showing cached aliases", subtitle: `Couldn't refresh: ${result.error.message} · ⏎ Retry`, arg: op("refresh", { query }), icon: icon("warn") })
   }
 
+  const { text, filters } = parseFilters(query)
+  const known = filters.filter(f => FILTERS[f])
+
+  // Typing ":" (or an unfinished filter) suggests the available filters
+  const partial = query.match(/(?:^|\s):(\w*)$/)
+  if (partial && !FILTERS[partial[1].toLowerCase()]) {
+    const before = query.slice(0, partial.index).trim()
+    for (const [name, f] of Object.entries(FILTERS)) {
+      if (!name.startsWith(partial[1].toLowerCase())) continue
+      const count = result.data.filter(f.test).length
+      items.push({ title: `:${name}`, subtitle: `${f.help} (${count})`, valid: false, autocomplete: `${before ? before + " " : ""}:${name} `, icon: icon("info") })
+    }
+  }
+
+  const sorters = {
+    az: (x, y) => x.attributes.proxy_address.localeCompare(y.attributes.proxy_address),
+    received: (x, y) => (y.attributes.received_emails || 0) - (x.attributes.received_emails || 0),
+    newest: (x, y) => parseDate(y.attributes.created_at) - parseDate(x.attributes.created_at),
+  }
+  const showAutomatic = !config.hideAutomatic || known.includes("all") || known.includes("auto")
   const aliases = result.data
     .slice()
-    .sort((x, y) => parseDate(y.attributes.created_at) - parseDate(x.attributes.created_at))
+    .sort(sorters[config.sortOrder] || sorters.newest)
+    .filter(alias => showAutomatic || !isAutomatic(alias))
+    .filter(alias => known.every(f => FILTERS[f].test(alias)))
     .filter(alias => {
       const a = alias.attributes
-      return matches(query, a.proxy_address, a.description, Object.keys(a.real_addresses || {}).join(" "))
+      return matches(text, a.proxy_address, a.description, Object.keys(a.real_addresses || {}).join(" "))
     })
 
   items.push(...aliases.map(aliasItem))
 
-  if (query.trim()) {
+  if (known.length && !aliases.length) {
+    items.push({ title: "No aliases match these filters", subtitle: known.map(f => ":" + f).join(" "), valid: false, icon: icon("info") })
+  }
+
+  if (text.trim() && !known.length) {
     items.push({
-      title: `Create new alias “${query.trim()}”`,
+      title: `Create new alias “${text.trim()}”`,
       subtitle: "Random address with this description, forwarding to your default address",
-      arg: op("create", { kind: "random", description: query.trim() }),
+      arg: op("create", { kind: "random", description: text.trim() }),
       icon: icon("new"),
-      mods: { cmd: { arg: op("create", { kind: "random", description: query.trim(), invert: true }), subtitle: config.afterCreate === "paste" ? "Create and copy instead of pasting" : "Create and paste into the frontmost app" } },
+      mods: { cmd: { arg: op("create", { kind: "random", description: text.trim(), invert: true }), subtitle: config.afterCreate === "paste" ? "Create and copy instead of pasting" : "Create and paste into the frontmost app" } },
     })
-  } else {
+  } else if (!query.trim()) {
     const meta = result.meta || {}
     // usedProxyBindings also counts deleted aliases, so show the live count alongside the limit
     const count = `${result.data.length} alias${result.data.length === 1 ? "" : "es"}`
     const quota = meta.availableProxyBindings !== undefined ? `${count} · limit ${meta.availableProxyBindings}` : count
     items.push({
       title: `ProxiedMail · ${quota}`,
-      subtitle: `${meta.isVerificationEmailSend ? "Verification email pending · " : ""}⏎ Refresh · ⌘⏎ Open dashboard · ⌥⏎ Configure workflow`,
+      subtitle: `${meta.isVerificationEmailSend ? "Verification email pending · " : ""}⏎ Refresh · ⌘⏎ Open dashboard · ⌥⏎ Configure workflow · type : to filter`,
       arg: op("refresh", { query: "" }),
       icon: icon("info"),
       valid: true,
@@ -599,7 +669,8 @@ function modeAliases(query) {
     }
   }
 
-  return JSON.stringify({ items })
+  // Alfred's learned ordering would override an explicit sort order
+  return JSON.stringify({ items, ...(config.sortOrder === "newest" ? {} : { skipknowledge: true }) })
 }
 
 function modeAliasActions(query) {
@@ -639,6 +710,15 @@ function modeAliasActions(query) {
   const looksLikeURL = /^https?:\/\/\S+$/i.test(text)
   const items = []
 
+  for (const r of unverifiedAddresses(alias)) {
+    items.push({
+      title: `${r.address} isn't verified`,
+      subtitle: "Mail to this alias isn't delivered there until you click the link ProxiedMail emailed to it",
+      valid: false,
+      icon: icon("warn"),
+    })
+  }
+
   items.push({
     title: `Copy ${address}`,
     subtitle: "⏎ Copy · ⌘⏎ Paste into frontmost app",
@@ -674,13 +754,28 @@ function modeAliasActions(query) {
     ? { title: `Set description: “${text}”`, subtitle: a.description ? `Currently: ${a.description}` : "Currently empty", arg: op("patch", { id: alias.id, changes: { description: text } }), icon: icon("edit") }
     : { title: "Edit description", subtitle: a.description ? `“${a.description}” · Type a new description after the address` : "Type a description after the address", valid: false, autocomplete: base + (a.description || ""), icon: icon("edit") })
 
+  if (looksLikeEmail && !burner && reals.length && !reals.some(r => r.address === text.toLowerCase())) {
+    items.push({ title: `Also forward to ${text}`, subtitle: "Add it alongside the current forwarding address. A new address needs to be verified by email.", arg: op("forward", { id: alias.id, address: text, mode: "add" }), icon: icon("edit") })
+  }
   items.push(looksLikeEmail
-    ? { title: `Forward to ${text}`, subtitle: "Replace the forwarding address. A new address may need to be verified by email.", arg: op("forward", { id: alias.id, address: text }), icon: icon("edit") }
+    ? { title: `Forward only to ${text}`, subtitle: "Replace the forwarding address. A new address needs to be verified by email.", arg: op("forward", { id: alias.id, address: text }), icon: icon("edit") }
     : { title: "Change forwarding address", subtitle: `Currently: ${burner ? "none (burner)" : reals.map(r => r.address).join(", ")} · Pick one below or type an email after the alias`, valid: false, autocomplete: base, icon: icon("edit") })
 
   if (!text) {
     for (const k of knownForwards(result.data).filter(k => !reals.some(r => r.address === k.address)).slice(0, 3)) {
-      items.push({ title: `Forward to ${k.address}`, subtitle: k.count ? `Used by ${k.count} other alias${k.count === 1 ? "" : "es"}` : "Your account email", arg: op("forward", { id: alias.id, address: k.address }), icon: icon("alias") })
+      items.push({
+        title: `Forward only to ${k.address}`,
+        subtitle: `${k.verified ? "" : "⚠️ unverified · "}${k.count ? `Used by ${k.count} other alias${k.count === 1 ? "" : "es"}` : "Your account email"}${burner || !reals.length ? "" : " · ⌘⏎ Add instead of replacing"}`,
+        arg: op("forward", { id: alias.id, address: k.address }),
+        icon: icon(k.verified ? "alias" : "warn"),
+        mods: burner || !reals.length ? {} : { cmd: { arg: op("forward", { id: alias.id, address: k.address, mode: "add" }), subtitle: `Also forward to ${k.address}` } },
+      })
+    }
+    const removable = reals.filter(r => !r.internal)
+    if (removable.length > 1) {
+      for (const r of removable) {
+        items.push({ title: `Stop forwarding to ${r.address}`, subtitle: `Keep forwarding to ${removable.filter(x => x !== r).map(x => x.address).join(", ")}`, arg: op("forward", { id: alias.id, address: r.address, mode: "remove" }), icon: icon("aliasOff") })
+      }
     }
   }
 
@@ -852,9 +947,9 @@ function createForwardPicker(text) {
     const usage = k.count ? `Used by ${k.count} alias${k.count === 1 ? "" : "es"}` : "Your account email"
     items.push({
       title: k.address,
-      subtitle: `${k.address === chosen ? "✓ Selected · " : ""}${usage}${k.account && k.count ? " · account email" : ""}`,
+      subtitle: `${k.address === chosen ? "✓ Selected · " : ""}${k.verified ? "" : "⚠️ unverified · "}${usage}${k.account && k.count ? " · account email" : ""}`,
       arg: op("setPref", { key: "forward", value: k.address }),
-      icon: icon("alias"),
+      icon: icon(k.verified ? "alias" : "warn"),
     })
   }
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text) && !known.some(k => k.address === text.toLowerCase())) {
@@ -904,6 +999,10 @@ function inboxPickAlias(query) {
     })
 
   if (!items.length) items.push({ title: "No matching aliases", valid: false, icon: icon("info") })
+  const off = result.data.filter(a => a.attributes.is_browsable !== true).length
+  if (off && !query) {
+    items.push({ title: `Turn on inbox browsing for ${off} alias${off === 1 ? "" : "es"}`, subtitle: "Needed to read their emails here. Only emails received afterwards are listed.", arg: op("browseAll"), icon: icon("inbox") })
+  }
   return JSON.stringify({ items })
 }
 
@@ -985,16 +1084,16 @@ function inboxEmail(alias, emailId, query) {
     quicklookurl: htmlPath,
     icon: icon("mail"),
     text: { copy: e.plain, largetype: e.plain.slice(0, 1000) },
-    mods: { cmd: { arg: op("copy", { text: e.plain, notify: "Email text copied" }), subtitle: "Copy plain-text body" } },
+    mods: { cmd: { arg: op("copy", { text: e.plain, notify: "Email text copied", secret: true }), subtitle: "Copy plain-text body" } },
   })
 
   for (const code of codes) {
     items.push({
       title: `Copy code ${code}`,
       subtitle: "⏎ Copy · ⌘⏎ Paste into frontmost app",
-      arg: op("copy", { text: code, notify: `Code ${code} copied` }),
+      arg: op("copy", { text: code, notify: `Code ${code} copied`, secret: true }),
       icon: icon("code"),
-      mods: { cmd: { arg: op("paste", { text: code }), subtitle: "Paste code into the frontmost app" } },
+      mods: { cmd: { arg: op("paste", { text: code, secret: true }), subtitle: "Paste code into the frontmost app" } },
     })
   }
 
@@ -1020,8 +1119,6 @@ function inboxEmail(alias, emailId, query) {
 
 // ─── Script Filter: code (watch for verification codes) ─────────────────────
 
-const WATCH_SECONDS = 180
-const WATCH_WINDOW_MINUTES = 15
 const RERUN_SECONDS = 3
 const watchStatePath = () => `${config.cacheDir}/watch.json`
 
@@ -1053,10 +1150,10 @@ function codeItems(r) {
     return r.codes.map(code => ({
       title: code,
       subtitle: `${r.subject} · ${meta}`,
-      arg: op("copy", { text: code, notify: `Code ${code} copied` }),
+      arg: op("copy", { text: code, notify: `Code ${code} copied`, secret: true }),
       icon: icon("code"),
       text: { copy: code, largetype: code },
-      mods: { cmd: { arg: op("paste", { text: code }), subtitle: "Paste code into the frontmost app" }, alt: openEmail },
+      mods: { cmd: { arg: op("paste", { text: code, secret: true }), subtitle: "Paste code into the frontmost app" }, alt: openEmail },
     }))
   }
   if (r.link) {
@@ -1084,7 +1181,7 @@ function modeCode(query) {
   if (!state || state.scope !== scopeKey || now - state.lastPoll > (RERUN_SECONDS + 5) * 1000) {
     state = { scope: scopeKey, started: now, counts: null, seen: {}, results: [] }
   }
-  const remaining = Math.max(0, Math.round((state.started + WATCH_SECONDS * 1000 - now) / 1000))
+  const remaining = Math.max(0, Math.round((state.started + config.watchSeconds * 1000 - now) / 1000))
   const watching = remaining > 0
 
   let aliases
@@ -1122,7 +1219,7 @@ function modeCode(query) {
   // Aliases whose new mail couldn't be fetched yet keep their old count, so they're retried next run
   const retry = new Set()
   if (watching) {
-    const since = now - WATCH_WINDOW_MINUTES * 60 * 1000
+    const since = now - config.windowMinutes * 60 * 1000
     for (const alias of candidates) {
       let emails
       try { emails = loadInbox(alias.id, true) } catch { retry.add(alias.id); continue }
@@ -1156,7 +1253,7 @@ function modeCode(query) {
   const status = watching
     ? {
         title: state.results.length ? "Still watching for new emails…" : address ? `Waiting for email to ${address}…` : "Waiting for verification codes…",
-        subtitle: `Checking every ${RERUN_SECONDS}s · stops in ${clock}${address ? " · ⏎ Copy the address" : ` · emails from the last ${WATCH_WINDOW_MINUTES} min`}`,
+        subtitle: `Checking every ${RERUN_SECONDS}s · stops in ${clock}${address ? " · ⏎ Copy the address" : ` · emails from the last ${config.windowMinutes} min`}`,
         icon: icon("refresh"),
         ...(address ? { arg: op("copy", { text: address }) } : { valid: false }),
       }
@@ -1172,12 +1269,12 @@ function modeCode(query) {
     } else if (off === aliases.length) {
       items.push({
         title: "None of your aliases have inbox browsing on",
-        subtitle: `Codes only appear for aliases with inbox browsing · turn it on in ${config.kwInbox}, or create a burner with ${config.kwCreate}`,
-        valid: false,
+        subtitle: "Codes only appear for aliases with inbox browsing · ⏎ Turn it on for all aliases",
+        arg: op("browseAll"),
         icon: icon("warn"),
       })
     } else if (off) {
-      items.push({ title: `${off} alias${off === 1 ? "" : "es"} without inbox browsing aren't checked`, subtitle: `Turn it on per alias in ${config.kwInbox}`, valid: false, icon: icon("info") })
+      items.push({ title: `${off} alias${off === 1 ? "" : "es"} without inbox browsing aren't checked`, subtitle: "⏎ Turn inbox browsing on for all of them", arg: op("browseAll"), icon: icon("info") })
     }
   }
 
@@ -1187,7 +1284,11 @@ function modeCode(query) {
 // ─── Actions ────────────────────────────────────────────────────────────────
 
 // Output routed by the workflow's Conditional on {var:out}: copy | copy_notify | paste | notify | none
-function output(out, arg = "", notifyTitle = "", notifyText = "") {
+// always: show the notification even when notifications are turned off (failures, warnings)
+function output(out, arg = "", notifyTitle = "", notifyText = "", always = false) {
+  if (!config.notifications && !always) {
+    out = { copy_notify: "copy", notify: "none", secret_notify: "secret" }[out] || out
+  }
   return JSON.stringify({ alfredworkflow: { arg, variables: { out, notif_title: notifyTitle, notif_text: notifyText } } })
 }
 
@@ -1251,7 +1352,7 @@ function actionCreate(params) {
     reals = [`${randomLocalPart(16)}@${INTERNAL_DOMAINS[0]}`]
   } else {
     reals = defaultForward(aliases)
-    if (!reals.length) return output("notify", "", "No forwarding address", "Set a default forwarding address in the workflow configuration")
+    if (!reals.length) return output("notify", "", "No forwarding address", "Choose one in the Forwarding to row of pmnew", true)
   }
 
   if (params.kind === "custom") {
@@ -1265,7 +1366,7 @@ function actionCreate(params) {
   if (params.kind === "site") {
     const url = params.url || frontmostBrowserURL()
     const host = url && hostname(url)
-    if (!host) return output("notify", "", "No browser tab found", "Open the website in Safari or a Chromium browser (Chrome, Arc, Brave, Edge…)")
+    if (!host) return output("notify", "", "No browser tab found", "Open the website in Safari or a Chromium browser (Chrome, Arc, Brave, Edge…). Firefox can't be read.", true)
     description = description ? `${host} · ${description}` : host
   }
 
@@ -1300,7 +1401,7 @@ function actionCreate(params) {
 
 function actionToggle(id) {
   const alias = getAliasFresh(id)
-  if (!realAddresses(alias).length) return output("notify", "", "No forwarding address", alias.attributes.proxy_address)
+  if (!realAddresses(alias).length) return output("notify", "", "No forwarding address", alias.attributes.proxy_address, true)
   const enable = !forwardingEnabled(alias)
   const real = {}
   for (const r of realAddresses(alias)) real[r.address] = enable
@@ -1309,12 +1410,39 @@ function actionToggle(id) {
   return output("notify", "", enable ? "Forwarding resumed" : "Forwarding paused", alias.attributes.proxy_address)
 }
 
-function actionForward(id, address) {
+// mode: "replace" (default), "add" or "remove"
+function actionForward(id, address, mode = "replace") {
   const alias = getAliasFresh(id)
-  const response = api("PATCH", `proxy-bindings/${alias.id}`, patchBody(alias, { real_addresses: { [address]: true } }))
+  const current = {}
+  for (const r of realAddresses(alias)) current[r.address] = r.enabled
+  let real
+  if (mode === "add") real = { ...current, [address]: true }
+  else if (mode === "remove") {
+    if (!(address in current)) return output("notify", "", `Not forwarding to ${address}`, alias.attributes.proxy_address, true)
+    real = { ...current }
+    delete real[address]
+    if (!Object.keys(real).length) return output("notify", "", "Can't remove the only forwarding address", alias.attributes.proxy_address, true)
+  } else real = { [address]: true }
+
+  const response = api("PATCH", `proxy-bindings/${alias.id}`, patchBody(alias, { real_addresses: real }))
   invalidateAliases()
   const verify = response.meta && response.meta.isVerificationEmailSend ? " · Check that inbox for a verification email" : ""
-  return output("notify", "", "Forwarding updated", `${alias.attributes.proxy_address} → ${address}${verify}`)
+  const title = mode === "add" ? "Forwarding address added" : mode === "remove" ? "Forwarding address removed" : "Forwarding updated"
+  return output("notify", "", title, `${alias.attributes.proxy_address} → ${Object.keys(real).join(", ")}${verify}`)
+}
+
+// Turn on inbox browsing for every alias that has it off
+function actionBrowseAll() {
+  const aliases = loadAliases(true).data.filter(a => a.attributes.is_browsable !== true)
+  let done = 0
+  const failed = []
+  for (const alias of aliases) {
+    try { api("PATCH", `proxy-bindings/${alias.id}`, patchBody(alias, { is_browsable: true })); done++ } catch { failed.push(alias.attributes.proxy_address) }
+  }
+  invalidateAliases()
+  return failed.length
+    ? output("notify", "", `Inbox browsing on for ${done} of ${aliases.length} aliases`, `Failed: ${failed.join(", ")}`, true)
+    : output("notify", "", "Inbox browsing turned on", `${done} alias${done === 1 ? "" : "es"} updated`)
 }
 
 function actionPatch(id, changes, then) {
@@ -1340,12 +1468,14 @@ function actionDelete(id, address) {
 
 function actionRun(json) {
   let params
-  try { params = JSON.parse(json) } catch { return output("notify", "", "ProxiedMail", "Unknown action") }
+  try { params = JSON.parse(json) } catch { return output("notify", "", "ProxiedMail", "Unknown action", true) }
 
   try {
     switch (params.op) {
-      case "copy": return output(params.notify ? "copy_notify" : "copy", params.text, params.notify || "", params.text)
-      case "paste": return output("paste", params.text)
+      case "copy":
+        if (params.secret) return output(params.notify ? "secret_notify" : "secret", params.text, params.notify || "", params.text)
+        return output(params.notify ? "copy_notify" : "copy", params.text, params.notify || "", params.text)
+      case "paste": return output(params.secret ? "secret_paste" : "paste", params.text)
       case "open": openURL(params.url); return output("none")
       case "openFile": $.NSWorkspace.sharedWorkspace.openURL($.NSURL.fileURLWithPath(params.path)); return output("none")
       case "nav": navigate(params.query || "", params.keyword); return output("none")
@@ -1361,7 +1491,8 @@ function actionRun(json) {
         navigate("", config.kwCreate)
         return output("none")
       case "toggle": return actionToggle(params.id)
-      case "forward": return actionForward(params.id, params.address)
+      case "forward": return actionForward(params.id, params.address, params.mode)
+      case "browseAll": return actionBrowseAll()
       case "patch": return actionPatch(params.id, params.changes || {}, params.then)
       case "delete": return actionDelete(params.id, params.address)
       case "deleteEmail":
@@ -1382,20 +1513,20 @@ function actionRun(json) {
       }
       case "copyText": {
         const e = emailParts(loadEmail(params.id))
-        return output("copy_notify", e.plain, "Email text copied", e.subject)
+        return output("secret_notify", e.plain, "Email text copied", e.subject)
       }
       case "copyCode": {
         const e = emailParts(loadEmail(params.id))
         const code = extractCodes(e.subject, e.plain)[0]
         return code
-          ? output("copy_notify", code, `Code ${code} copied`, e.subject)
-          : output("notify", "", "No code found", e.subject)
+          ? output("secret_notify", code, `Code ${code} copied`, e.subject)
+          : output("notify", "", "No code found", e.subject, true)
       }
-      default: return output("notify", "", "ProxiedMail", `Unknown action: ${params.op}`)
+      default: return output("notify", "", "ProxiedMail", `Unknown action: ${params.op}`, true)
     }
   } catch (error) {
     const message = error.isAuth ? "API token missing or invalid. Check the workflow configuration." : error.message
-    return output("notify", "", "ProxiedMail error", message)
+    return output("notify", "", "ProxiedMail error", message, true)
   }
 }
 

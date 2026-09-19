@@ -15,7 +15,7 @@ import zipfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 WORKFLOW = ROOT / "workflow"
 DIST = ROOT / "dist"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 BUNDLE_ID = "com.x-o-r-r-o.alfred.proxiedmail"
 # Earlier bundle IDs, so --install can find and update an older installed copy
 OLD_BUNDLE_IDS = ["com.zaqlimited.alfred.proxiedmail"]
@@ -65,9 +65,9 @@ def script_filter(name, keyword_var, mode, title, subtext, running, x, y):
     }, x, y)
 
 
-def run_script(name, script, x, y, note=None):
+def run_script(name, script, x, y, note=None, concurrently=False):
     add(name, "alfred.workflow.action.script", 2, {
-        "concurrently": False,
+        "concurrently": concurrently,
         "escaping": 102,
         "script": script,
         "scriptargtype": 1,
@@ -76,12 +76,13 @@ def run_script(name, script, x, y, note=None):
     }, x, y, note)
 
 
-def clipboard(name, autopaste, x, y):
+def clipboard(name, autopaste, x, y, transient=False):
     add(name, "alfred.workflow.output.clipboard", 3, {
         "autopaste": autopaste,
         "clipboardtext": "{query}",
         "ignoredynamicplaceholders": True,
-        "transient": False,
+        # Transient items (codes, email text) aren't saved to Alfred's clipboard history
+        "transient": transient,
     }, x, y)
 
 
@@ -123,7 +124,8 @@ add("route", "alfred.workflow.utility.conditional", 1, {
     "conditions": [
         {"inputstring": "{var:out}", "matchcasesensitive": False, "matchmode": 0,
          "matchstring": value, "outputlabel": label, "uid": uid(f"cond_{value}")}
-        for value, label in [("copy", "Copy"), ("copy_notify", "Copy + Notify"), ("paste", "Paste"), ("notify", "Notify")]
+        for value, label in [("copy", "Copy"), ("copy_notify", "Copy + Notify"), ("paste", "Paste"), ("notify", "Notify"),
+                             ("secret", "Copy Secret"), ("secret_notify", "Copy Secret + Notify"), ("secret_paste", "Paste Secret")]
     ],
     "elselabel": "Nothing", "hideelse": True,
 }, 500, 200)
@@ -131,6 +133,14 @@ add("route", "alfred.workflow.utility.conditional", 1, {
 clipboard("clip_copy", False, 700, 30)
 clipboard("clip_copy_notify", False, 700, 180)
 clipboard("clip_paste", True, 700, 330)
+clipboard("clip_secret", False, 700, 480, transient=True)
+clipboard("clip_secret_notify", False, 700, 630, transient=True)
+clipboard("clip_secret_paste", True, 700, 780, transient=True)
+run_script("clear_clipboard", """[[ "${clear_seconds:-0}" -gt 0 ]] || exit 0
+sleep "${clear_seconds}"
+# Only clear if the copied secret is still on the clipboard
+[[ "$(/usr/bin/pbpaste)" == "${1}" ]] && /usr/bin/printf '' | /usr/bin/pbcopy""", 900, 630,
+           "Clears copied codes after the configured delay", concurrently=True)
 add("notify", "alfred.workflow.output.notification", 1, {
     "lastpathcomponent": False, "onlyshowifquerypopulated": False, "removeextension": False,
     "text": "{var:notif_text}", "title": "{var:notif_title}",
@@ -149,6 +159,12 @@ connect("route", "clip_copy_notify", "cond_copy_notify")
 connect("route", "clip_paste", "cond_paste")
 connect("route", "notify", "cond_notify")
 connect("clip_copy_notify", "notify")
+connect("route", "clip_secret", "cond_secret")
+connect("route", "clip_secret_notify", "cond_secret_notify")
+connect("route", "clip_secret_paste", "cond_secret_paste")
+connect("clip_secret_notify", "notify")
+for clip in ("clip_secret", "clip_secret_notify", "clip_secret_paste"):
+    connect(clip, "clear_clipboard")
 
 # ── User configuration ──────────────────────────────────────────────────────
 def textfield(variable, label, default="", placeholder="", description="", required=False):
@@ -161,15 +177,39 @@ def checkbox(variable, label, text, default, description=""):
             "config": {"default": default, "required": False, "text": text}}
 
 
+def popup(variable, label, default, pairs, description=""):
+    return {"type": "popupbutton", "variable": variable, "label": label, "description": description,
+            "config": {"default": default, "pairs": pairs}}
+
+
 user_config = [
     textfield("api_token", "API Token", required=True,
               description="Copy it from the API section of https://proxiedmail.com/en/settings"),
-    {"type": "popupbutton", "variable": "after_create", "label": "After Creating", "description": "⌘↩ does the opposite.",
-     "config": {"default": "copy", "pairs": [["Copy alias to clipboard", "copy"], ["Paste alias into frontmost app", "paste"]]}},
+    popup("pmail_enter", "Alias Search", "copy", [["↩ copies the alias", "copy"], ["↩ pastes the alias", "paste"]],
+          "What ↩ does in the alias search. ⌘↩ does the opposite."),
+    popup("after_create", "After Creating", "copy", [["Copy alias to clipboard", "copy"], ["Paste alias into frontmost app", "paste"]],
+          "⌘↩ does the opposite."),
+    popup("sort_order", "Sort Aliases", "newest", [["Newest first (learns from use)", "newest"], ["Alphabetically", "az"], ["Most emails received", "received"]]),
+    checkbox("hide_automatic", "Automatic Aliases", "Hide ProxiedMail's automatic news alias", False,
+             "Search with :all to include it."),
     checkbox("new_browsable", "Inbox Browsing", "Turn on inbox browsing for new aliases", True,
              "Required to read emails in Alfred. Burner aliases always have it on."),
     checkbox("remote_images", "Remote Images", "Load remote images when viewing emails", False,
              "Off by default so senders can't track when you open an email."),
+    checkbox("notifications", "Notifications", "Show a notification after actions", True,
+             "Failures are always shown."),
+    {"type": "slider", "variable": "clear_seconds", "label": "Clear Codes",
+     "description": "Seconds before a copied code or email text is cleared from the clipboard. 0 keeps it. Codes are never saved to Alfred's clipboard history.",
+     "config": {"minvalue": 0, "maxvalue": 120, "defaultvalue": 0, "markercount": 5, "onlystoponmarkers": True, "showmarkers": True}},
+    popup("watch_minutes", "Watch For Codes", "3", [["1 minute", "1"], ["3 minutes", "3"], ["5 minutes", "5"], ["10 minutes", "10"]],
+          "How long the codes view keeps checking for new emails."),
+    popup("code_window_minutes", "Recent Emails", "15", [["Last 5 minutes", "5"], ["Last 15 minutes", "15"], ["Last 30 minutes", "30"], ["Last hour", "60"]],
+          "How old an email can be to show up in the codes view."),
+    popup("cache_ttl", "Refresh Aliases", "300", [["Every minute", "60"], ["Every 5 minutes", "300"], ["Every 15 minutes", "900"], ["Every hour", "3600"]],
+          "How often the alias list is fetched again. Changes made in Alfred always refresh it."),
+    popup("timeout_seconds", "Network Timeout", "15", [["5 seconds", "5"], ["10 seconds", "10"], ["15 seconds", "15"], ["30 seconds", "30"]]),
+    textfield("api_host", "API Address", default="https://proxiedmail.com",
+              description="Only change this if ProxiedMail tells you to."),
     textfield("kw_aliases", "Search Keyword", default="pmail"),
     textfield("kw_create", "Create Keyword", default="pmnew"),
     textfield("kw_inbox", "Inbox Keyword", default="pminbox"),
@@ -184,7 +224,9 @@ Search your [ProxiedMail](https://proxiedmail.com) aliases via the `pmail` keywo
 * <kbd>⌘</kbd><kbd>↩</kbd> Paste alias into the frontmost app.
 * <kbd>⌥</kbd><kbd>↩</kbd> Open alias inbox.
 * <kbd>⌃</kbd><kbd>↩</kbd> Pause or resume forwarding.
-* <kbd>⇧</kbd><kbd>↩</kbd> Show more actions: edit description, change forwarding address, set webhook, watch for codes, delete alias. Type after the address to enter a new description, forwarding address, or webhook URL.
+* <kbd>⇧</kbd><kbd>↩</kbd> Show more actions: edit description, add, replace or remove forwarding addresses, set webhook, watch for codes, delete alias. Type after the address to enter a new description, forwarding address, or webhook URL.
+
+Narrow the search with filters such as `:paused`, `:burner`, `:unverified`, `:mail`, `:inbox`, and `:webhook`. Type `:` to see them all. Forwarding addresses that still need to be verified are marked ⚠️, since ProxiedMail doesn't deliver to them yet.
 
 Create aliases via the `pmnew` keyword, optionally followed by a description. Start with `name@` for a custom address, e.g. `pmnew shop@ Amazon orders`.
 
@@ -201,9 +243,9 @@ Read received emails via the `pminbox` keyword. Pick an alias, then an email to 
 * <kbd>⌃</kbd><kbd>↩</kbd> Copy email text.
 * <kbd>⌘</kbd><kbd>Y</kbd> Quick Look email.
 
-Emails can only be read for aliases with inbox browsing on, and only emails received after it was turned on are listed. Remote images are blocked unless allowed in the Workflow’s Configuration.
+Emails can only be read for aliases with inbox browsing on, and only emails received after it was turned on are listed. Turn it on for all aliases at once from the bottom of the list. Remote images are blocked unless allowed in the Workflow’s Configuration.
 
-Watch for verification codes via the `pmcode` keyword. New emails to aliases with inbox browsing are checked every few seconds for three minutes, showing codes and verification links from the last 15 minutes.
+Watch for verification codes via the `pmcode` keyword. New emails to aliases with inbox browsing are checked every few seconds, showing codes and verification links from recent emails. Copied codes are kept out of Alfred's clipboard history and can be cleared automatically, as set in the Workflow’s Configuration.
 
 * <kbd>↩</kbd> Copy code or open verification link.
 * <kbd>⌘</kbd><kbd>↩</kbd> Paste code into the frontmost app.

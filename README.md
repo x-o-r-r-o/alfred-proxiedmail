@@ -17,9 +17,11 @@ Search your aliases via the `pmail` keyword. Type to filter by address, descript
 * <kbd>⌘</kbd><kbd>↩</kbd> Paste alias into the frontmost app.
 * <kbd>⌥</kbd><kbd>↩</kbd> Open alias inbox.
 * <kbd>⌃</kbd><kbd>↩</kbd> Pause or resume forwarding.
-* <kbd>⇧</kbd><kbd>↩</kbd> Show more actions: edit description, change forwarding address, set webhook, watch for codes, delete alias.
+* <kbd>⇧</kbd><kbd>↩</kbd> Show more actions: edit description, add, replace or remove forwarding addresses, set webhook, watch for codes, delete alias.
 
 ![Alias actions](images/actions.png)
+
+Narrow the search with filters such as `:paused`, `:burner`, `:unverified`, `:mail`, `:inbox`, and `:webhook`. Type `:` to see them all. Forwarding addresses that still need to be verified are marked ⚠️, since ProxiedMail doesn't deliver to them yet.
 
 Create aliases via the `pmnew` keyword, optionally followed by a description. Start with `name@` for a custom address, e.g. `pmnew shop@ Amazon orders`.
 
@@ -31,20 +33,38 @@ Create aliases via the `pmnew` keyword, optionally followed by a description. St
 
 Create a random alias, one described by the website in the frontmost browser tab, or a burner inbox with no forwarding. Choose the domain and forwarding address for new aliases from the rows below the create options.
 
-Read received emails via the `pminbox` keyword. Open them (with remote images blocked), copy verification codes, or open their links. Emails can only be read for aliases with inbox browsing on.
+Read received emails via the `pminbox` keyword. Open them (with remote images blocked), copy verification codes, or open their links. Emails can only be read for aliases with inbox browsing on, which you can turn on for all aliases at once from the bottom of the list.
 
 ![Reading an email](images/email.png)
 
-Watch for verification codes via the `pmcode` keyword. It checks for new emails every few seconds for three minutes.
+Watch for verification codes via the `pmcode` keyword. It checks for new emails every few seconds, for 3 minutes by default. Copied codes are kept out of Alfred's clipboard history and can be cleared from the clipboard automatically.
 
 ![Watching for codes](images/codes.png)
 
 Alternatively, search aliases from selected text or create an alias for a selected URL via the Universal Actions. Configure the Hotkeys to create an alias for the current website in one step, or to jump to the latest codes.
 
+## Settings
+
+Open the Workflow’s Configuration to change:
+
+| Setting | Default |
+|---|---|
+| What ↩ does in `pmail` and after creating | Copy (⌘↩ does the opposite) |
+| Alias sort order | Newest first, learning from use |
+| Hide ProxiedMail's automatic news alias | Off |
+| Inbox browsing for new aliases | On |
+| Remote images in emails | Off |
+| Notifications | On (failures always show) |
+| Clear copied codes after | Never (up to 120 seconds) |
+| How long `pmcode` watches / how far back it looks | 3 minutes / 15 minutes |
+| Alias list refresh and network timeout | 5 minutes / 15 seconds |
+| Keywords | `pmail`, `pmnew`, `pminbox`, `pmcode` |
+
 ## Privacy
 
 - Your API token stays in Alfred's workflow configuration and is sent only to ProxiedMail. It's passed to `curl` on stdin, so it never appears in the process list.
 - Emails are rendered locally with remote images and scripts blocked by default, so senders can't track when you open them.
+- Verification codes and email text are copied as transient items, so they never enter Alfred's clipboard history.
 - No analytics and no third-party services.
 
 ## Development
@@ -57,7 +77,7 @@ workflow/            The workflow bundle (what gets zipped)
 tools/demo/          Demo data (demo.sh on|off) and screenshot capture (shoot.sh)
 tools/build.py       Writes info.plist and packages dist/ProxiedMail.alfredworkflow
 tools/make_icons.swift  Renders all icons with AppKit
-test/run.sh          Runs every mode against fixtures in test/fixtures
+test/run.sh          Runs every mode against fixtures in test/fixtures (92 checks)
 ```
 
 ```bash
