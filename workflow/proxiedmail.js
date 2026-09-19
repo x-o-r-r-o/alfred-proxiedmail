@@ -41,6 +41,12 @@ const config = {
   fixtures: envVar("PM_FIXTURES"),
 }
 
+// Demo mode inside Alfred must never show cached or saved data from the real account
+if (config.fixtures && envVar("alfred_version")) {
+  config.cacheDir = `${config.fixtures}/cache`
+  config.dataDir = `${config.fixtures}/data`
+}
+
 // ─── Files ──────────────────────────────────────────────────────────────────
 
 function mkpath(path) {
