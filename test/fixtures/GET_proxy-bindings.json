@@ -1,0 +1,68 @@
+{
+ "meta": {
+  "usedProxyBindings": 3,
+  "availableProxyBindings": 10,
+  "isVerificationEmailSend": false
+ },
+ "data": [
+  {
+   "type": "proxy_bindings",
+   "id": "C6C4C547-6000-0000-00000BAE",
+   "attributes": {
+    "real_addresses": {
+     "me@example.com": {
+      "is_enabled": true,
+      "is_verification_needed": false,
+      "is_verified": true
+     }
+    },
+    "proxy_address": "v7do1zfs8w@proxiedmail.com",
+    "is_browsable": true,
+    "received_emails": 2,
+    "description": "Netflix",
+    "callback_url": "",
+    "created_at": "2026-09-01 12:56:32",
+    "updated_at": "2026-09-18 12:56:32"
+   }
+  },
+  {
+   "type": "proxy_bindings",
+   "id": "DBE6A547-6000-0000-00000BAE",
+   "attributes": {
+    "real_addresses": {
+     "me@example.com": {
+      "is_enabled": false,
+      "is_verification_needed": false,
+      "is_verified": true
+     }
+    },
+    "proxy_address": "news-65ddf8@proxiedmail.com",
+    "received_emails": 0,
+    "description": "Automatic address",
+    "callback_url": "https://example.com/hook",
+    "created_at": "2026-08-23 12:53:22",
+    "updated_at": "2026-08-23 12:53:22",
+    "is_browsable": false
+   }
+  },
+  {
+   "type": "proxy_bindings",
+   "id": "AAAA0000-6000-0000-00000BAE",
+   "attributes": {
+    "real_addresses": {
+     "x1y2z3@int.proxiedmail.com": {
+      "is_enabled": true,
+      "is_verified": false
+     }
+    },
+    "proxy_address": "burner42@proxiedmail.com",
+    "is_browsable": true,
+    "received_emails": 1,
+    "description": "",
+    "callback_url": "",
+    "created_at": "2026-09-19 08:00:00",
+    "updated_at": "2026-09-19 08:00:00"
+   }
+  }
+ ]
+}

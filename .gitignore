@@ -1,0 +1,7 @@
+# Personal workflow configuration (API token) — never commit
+prefs.plist
+
+# Build output (attached to GitHub releases instead)
+dist/
+
+.DS_Store

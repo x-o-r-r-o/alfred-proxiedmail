@@ -1,0 +1,4 @@
+{"data":[
+{"type":"received_emails_link","id":"81F8AD00-0000-0000-00003CC8","attributes":{"recipient_email":"v7do1zfs8w@proxiedmail.com","sender_email":"info@account.netflix.com","subject":"Your Netflix verification code","attachmentsCounter":0,"link":"/api/v1/received-emails/81F8AD00-0000-0000-00003CC8","is_processed":true,"created_at":"2026-09-19 09:59:05","updated_at":"2026-09-19 09:59:08"}},
+{"type":"received_emails_link","id":"A38E8D00-0000-0000-00003CC8","attributes":{"recipient_email":"v7do1zfs8w@proxiedmail.com","sender_email":"webfay1@gmail.com","subject":"hihihi","attachmentsCounter":1,"link":"/api/v1/received-emails/A38E8D00-0000-0000-00003CC8","is_processed":true,"created_at":"2026-07-17 10:50:48","updated_at":"2026-07-17 10:50:55"}}
+]}
