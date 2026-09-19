@@ -190,7 +190,7 @@ Each of these either unlocks or hides a feature listed above.
 | 8 | `DELETE /proxy-bindings/{id}` | ✅ 204, alias removed. ⚠️ `meta.usedProxyBindings` still counts deleted aliases |
 | 9 | Bad token | **403 "Token not found"**, not 401. Treated as an auth error |
 | 10 | Rate limits | No `X-RateLimit-*` headers seen |
-| — | Received-email detail / delete / flush | Not yet verified. Needs a browsable alias that has received mail |
+| 11 | Received emails (live, 2026-09-19) | ✅ List and detail work; payload has `From`, `To`, `Subject`, `body-html`, `body-plain`, `stripped-text`, `headers`. Mail arrives within about a minute. `DELETE /received-emails/{id}` removes it (fetching it afterwards gives 500). `flush` is still unverified and unused |
 
 ## 6. Requirements summary
 - **User:** macOS with Alfred 5 and Powerpack (present on this Mac: Alfred 5.8, macOS 26.6.2). A ProxiedMail account with an API token from https://proxiedmail.com/en/settings.
