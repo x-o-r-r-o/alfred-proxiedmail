@@ -7,5 +7,5 @@ dist/
 .DS_Store
 
 # Local drafts
-forum-post.md
+forum-*.md
 PLAN.md
