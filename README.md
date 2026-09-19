@@ -58,7 +58,6 @@ tools/demo/          Demo data (demo.sh on|off) and screenshot capture (shoot.sh
 tools/build.py       Writes info.plist and packages dist/ProxiedMail.alfredworkflow
 tools/make_icons.swift  Renders all icons with AppKit
 test/run.sh          Runs every mode against fixtures in test/fixtures
-PLAN.md              Research notes and verified API behaviour
 ```
 
 ```bash
