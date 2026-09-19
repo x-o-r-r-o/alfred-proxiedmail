@@ -15,7 +15,7 @@ import zipfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 WORKFLOW = ROOT / "workflow"
 DIST = ROOT / "dist"
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 BUNDLE_ID = "com.x-o-r-r-o.alfred.proxiedmail"
 # Earlier bundle IDs, so --install can find and update an older installed copy
 OLD_BUNDLE_IDS = ["com.zaqlimited.alfred.proxiedmail"]
@@ -33,8 +33,12 @@ def add(name, type_, version, config, x, y, note=None):
     uidata[uid(name)] = {"xpos": x, "ypos": y, **({"note": note} if note else {})}
 
 
-def connect(src, dst, condition=None):
-    link = {"destinationuid": uid(dst), "modifiers": 0, "modifiersubtext": "", "vitoclose": False}
+# Alfred's modifier bitmasks for connections
+MODIFIERS = {"shift": 131072, "ctrl": 262144, "alt": 524288, "cmd": 1048576}
+
+
+def connect(src, dst, condition=None, modifier=None):
+    link = {"destinationuid": uid(dst), "modifiers": MODIFIERS[modifier] if modifier else 0, "modifiersubtext": "", "vitoclose": False}
     if condition:
         link["sourceoutputuid"] = uid(condition)
     connections.setdefault(uid(src), []).append(link)
@@ -147,8 +151,18 @@ add("notify", "alfred.workflow.output.notification", 1, {
 }, 900, 250)
 
 connect("hotkey_codes", "run_codes")
-for sf in ("sf_aliases", "sf_create", "sf_inbox", "sf_code"):
+# Each Script Filter's rows set their own ⌘/⌥/⌃/⇧ arg and subtitle in JSON ("mods");
+# explicit modifier connections route those to the same Run Script
+SCRIPT_FILTER_MODIFIERS = {
+    "sf_aliases": ["cmd", "alt", "ctrl", "shift"],
+    "sf_create": ["cmd", "alt"],
+    "sf_inbox": ["cmd", "alt", "ctrl"],
+    "sf_code": ["cmd", "alt"],
+}
+for sf, mods in SCRIPT_FILTER_MODIFIERS.items():
     connect(sf, "run")
+    for mod in mods:
+        connect(sf, "run", modifier=mod)
 connect("ua_text", "run_find")
 connect("ua_url", "run_url")
 connect("hotkey_site", "run_site")
